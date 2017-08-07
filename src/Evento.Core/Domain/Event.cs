@@ -21,10 +21,11 @@ namespace Evento.Core.Domain
         }
 
         public Event(Guid id, string name, string description, DateTime startDate, DateTime endDate)
-        { 
+        {
             Id = id;
-            Name = name;
-            Description = description;
+
+            SetName(name);
+            SetDescription(description);
 
             StartDate = startDate;
             EndDate = endDate;
@@ -44,5 +45,28 @@ namespace Evento.Core.Domain
                 seating++;
             }
         }
+
+        public void SetName(string name)
+        {
+            if (String.IsNullOrWhiteSpace(name))
+            {
+                throw new Exception($"Event with id: '{Id}' can not have an empty name.");
+            }
+
+            Name = name;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void SetDescription(string description)
+        {
+            if (String.IsNullOrWhiteSpace(description))
+            {
+                throw new Exception($"Event with id: '{Id}' can not have an empty description.");
+            }
+
+            Description = description;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
     }
 }
