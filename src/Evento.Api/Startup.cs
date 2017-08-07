@@ -8,6 +8,7 @@ using Evento.Core.Repositories;
 using Evento.Infrastructure.Mappers;
 using Evento.Infrastructure.Repositories;
 using Evento.Infrastructure.Services;
+using Evento.Infrastructure.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -49,6 +50,7 @@ namespace Evento.Api
 
             services.AddSingleton<IMapper>(AutoMapperConfig.Initialize());
 
+            services.Configure<JwtSettings>(Configuration.GetSection("jwt"));
 
         }
 
@@ -58,13 +60,15 @@ namespace Evento.Api
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
+            var jwtSettings = app.ApplicationServices.GetService<JwtSettings>();
+
             app.UseJwtBearerAuthentication(new JwtBearerOptions(){
                 AutomaticAuthenticate = true,
                 TokenValidationParameters = new TokenValidationParameters()
                 {
-                    ValidIssuer = "http://localhost:5000",
                     ValidateAudience = false,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("secret_key"))
+                    ValidIssuer = jwtSettings.Issuer,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
                 }
             });
             app.UseMvc();
