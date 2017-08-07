@@ -23,6 +23,19 @@ namespace Evento.Api.Controllers
             return Json(events);
         }
 
+        [HttpGet("{eventId}")]
+        public async Task<IActionResult> Get(Guid eventId)
+        {
+            var @event = await _eventService.GetAsync(eventId);
+
+            if(@eventId == null)
+            {
+                return NotFound();
+            }
+            
+            return Json(@event);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]CreateEvent command)
         {
@@ -39,6 +52,14 @@ namespace Evento.Api.Controllers
         public async Task<IActionResult> Put(Guid eventId, [FromBody]UpdateEvent command)
         {
             await _eventService.UpdateAsync(eventId, command.Name, command.Description);
+
+            return NoContent();
+        }
+
+        [HttpDelete("{eventId}")]
+        public async Task<IActionResult> Delete(Guid eventId)
+        {
+            await _eventService.DeleteAsync(eventId);
 
             return NoContent();
         }
