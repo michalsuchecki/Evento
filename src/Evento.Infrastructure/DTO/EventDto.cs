@@ -13,8 +13,5 @@ namespace Evento.Infrastructure.DTO
         public DateTime EndDate { get; set; }
         public DateTime UpdatedAt { get; set; }
         public int TicketsCount { get; set; }
-        public IEnumerable<Ticket> Tickets { get; set; }
-
-
     }
 }
