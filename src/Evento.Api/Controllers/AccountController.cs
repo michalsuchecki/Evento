@@ -38,7 +38,7 @@ namespace Evento.Api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Post(Login command)
         {
-            return NoContent();
+            return Json(await _userService.LoginAsync(command.Email, command.Password));
         }
 
     }
