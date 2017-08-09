@@ -37,7 +37,7 @@ namespace Evento.Core.Domain
 
         public void Cancel()
         {
-            if (Purchased)
+            if (!Purchased)
             {
                 throw new Exception($"Ticket was not purchased and can not be canceled");
             }
