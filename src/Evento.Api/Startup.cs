@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 
@@ -42,6 +43,8 @@ namespace Evento.Api
                     x.SerializerSettings.Formatting = Formatting.Indented;
                 });
 
+            services.AddAuthentication();
+
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
 
@@ -61,15 +64,15 @@ namespace Evento.Api
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            var jwtSettings = app.ApplicationServices.GetService<JwtSettings>();
+            var jwtSettings = app.ApplicationServices.GetService<IOptions<JwtSettings>>();
 
             app.UseJwtBearerAuthentication(new JwtBearerOptions(){
                 AutomaticAuthenticate = true,
                 TokenValidationParameters = new TokenValidationParameters()
                 {
                     ValidateAudience = false,
-                    ValidIssuer = jwtSettings.Issuer,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+                    ValidIssuer = jwtSettings.Value.Issuer,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Value.Key))
                 }
             });
             app.UseMvc();

@@ -1,8 +1,10 @@
 using System;
 using System.Threading.Tasks;
+using AutoMapper;
 using Evento.Core.Domain;
 using Evento.Core.Repositories;
 using Evento.Infrastructure.DTO;
+using Evento.Infrastructure.Extensions;
 
 namespace Evento.Infrastructure.Services
 {
@@ -10,11 +12,20 @@ namespace Evento.Infrastructure.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IJwtHander _jwtHandler;
+        private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository, IJwtHander jwtHandler)
+        public UserService(IUserRepository userRepository, IJwtHander jwtHandler, IMapper mapper)
         {
             _userRepository = userRepository;
             _jwtHandler = jwtHandler;
+            _mapper = mapper;
+        }
+
+        public async Task<AccountDto> GetAccountAsync(Guid userId)
+        {
+            var user = await _userRepository.GetOrFailAsync(userId);
+
+            return _mapper.Map<AccountDto>(user);
         }
 
         public async Task<TokenDto> LoginAsync(string email, string password)

@@ -6,8 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Evento.Api.Controllers
 {
-    [Route("[controller]")]
-    public class EventsController : Controller
+    public class EventsController : ApiControllerBase
     {
         private readonly IEventService _eventService;
 
