@@ -43,7 +43,9 @@ namespace Evento.Api
                     x.SerializerSettings.Formatting = Formatting.Indented;
                 });
 
-            services.AddAuthentication();
+            services.AddAuthorization(x => {
+                x.AddPolicy("HasAdminRole", p => p.RequireRole("admin"));
+            });
 
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
