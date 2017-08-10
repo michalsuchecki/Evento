@@ -49,6 +49,8 @@ namespace Evento.Api
                 x.AddPolicy("HasAdminRole", p => p.RequireRole("admin"));
             });
 
+            services.AddMemoryCache();
+
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
 

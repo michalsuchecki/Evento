@@ -1,25 +1,45 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Evento.Infrastructure.Commands.Events;
+using Evento.Infrastructure.DTO;
 using Evento.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using NLog;
 
 namespace Evento.Api.Controllers
 {
     public class EventsController : ApiControllerBase
     {
         private readonly IEventService _eventService;
+        private readonly IMemoryCache _cache;
 
-        public EventsController(IEventService eventService)
+        private readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+        public EventsController(IEventService eventService, IMemoryCache cache)
         {
             _eventService = eventService;
+            _cache = cache;
         }
 
         [HttpGet]
         public async Task<IActionResult> Get(string name)
         {
-            var events = await _eventService.BrowseAsync();
+            // 
+            var events = _cache.Get<IEnumerable<EventDto>>("events");
+            if (events == null)
+            {
+                logger.Info("Fetching from service.");
+                events = await _eventService.BrowseAsync(name);
+                _cache.Set("events", events, TimeSpan.FromMinutes(1));
+            }
+            else
+            {
+                logger.Info("Fetching from cache.");
+            }
+
             return Json(events);
         }
 
@@ -28,11 +48,11 @@ namespace Evento.Api.Controllers
         {
             var @event = await _eventService.GetAsync(eventId);
 
-            if(@eventId == null)
+            if (@eventId == null)
             {
                 return NotFound();
             }
-            
+
             return Json(@event);
         }
 
@@ -50,7 +70,7 @@ namespace Evento.Api.Controllers
         }
 
         [HttpPut("{eventId}")]
-        [Authorize(Policy = "HasAdminRole")]        
+        [Authorize(Policy = "HasAdminRole")]
         public async Task<IActionResult> Put(Guid eventId, [FromBody]UpdateEvent command)
         {
             await _eventService.UpdateAsync(eventId, command.Name, command.Description);
@@ -59,7 +79,7 @@ namespace Evento.Api.Controllers
         }
 
         [HttpDelete("{eventId}")]
-        [Authorize(Policy = "HasAdminRole")]        
+        [Authorize(Policy = "HasAdminRole")]
         public async Task<IActionResult> Delete(Guid eventId)
         {
             await _eventService.DeleteAsync(eventId);
