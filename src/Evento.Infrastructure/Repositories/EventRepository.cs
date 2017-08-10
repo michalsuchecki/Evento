@@ -16,7 +16,7 @@ namespace Evento.Infrastructure.Repositories
             new Event(Guid.NewGuid(), "Event #2", "Event #2 Description",
                 DateTime.UtcNow.AddHours(6), DateTime.UtcNow.AddHours(10)),
             new Event(Guid.NewGuid(), "Event #3", "Event #3 Description",
-                DateTime.UtcNow.AddHours(10), DateTime.UtcNow.AddHours(8))
+                DateTime.UtcNow.AddHours(10), DateTime.UtcNow.AddHours(20))
         };
 
         public async Task<Event> GetAsync(Guid id)
