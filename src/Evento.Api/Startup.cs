@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using AutoMapper;
 using Evento.Core.Repositories;
 using Evento.Infrastructure.Mappers;
@@ -24,6 +26,9 @@ namespace Evento.Api
 {
     public class Startup
     {
+        public IConfigurationRoot Configuration { get; }
+        public IContainer Container { get; private set; }
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -34,24 +39,26 @@ namespace Evento.Api
             Configuration = builder.Build();
         }
 
-        public IConfigurationRoot Configuration { get; }
+
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
             services.AddMvc()
-                .AddJsonOptions(x => {
+                .AddJsonOptions(x =>
+                {
                     x.SerializerSettings.Formatting = Formatting.Indented;
                 });
 
-            services.AddAuthorization(x => {
+            services.AddAuthorization(x =>
+            {
                 x.AddPolicy("HasAdminRole", p => p.RequireRole("admin"));
             });
 
             services.AddMemoryCache();
 
-            services.AddScoped<IEventRepository, EventRepository>();
+            //services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
 
             services.AddScoped<IEventService, EventService>();
@@ -63,10 +70,19 @@ namespace Evento.Api
 
             services.Configure<JwtSettings>(Configuration.GetSection("jwt"));
 
+            var builder = new ContainerBuilder();
+
+            builder.Populate(services);
+            builder.RegisterType<EventRepository>().As<IEventRepository>().InstancePerLifetimeScope();
+
+            Container = builder.Build();
+
+            return new AutofacServiceProvider(Container);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory,
+            IApplicationLifetime appLifetime)
         {
             // loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             // loggerFactory.AddDebug();
@@ -76,7 +92,8 @@ namespace Evento.Api
 
             var jwtSettings = app.ApplicationServices.GetService<IOptions<JwtSettings>>();
 
-            app.UseJwtBearerAuthentication(new JwtBearerOptions(){
+            app.UseJwtBearerAuthentication(new JwtBearerOptions()
+            {
                 AutomaticAuthenticate = true,
                 TokenValidationParameters = new TokenValidationParameters()
                 {
@@ -86,6 +103,11 @@ namespace Evento.Api
                 }
             });
             app.UseMvc();
+
+            appLifetime.ApplicationStopped.Register(() =>
+            {
+                Container.Dispose();
+            });
         }
     }
 }
