@@ -65,15 +65,18 @@ namespace Evento.Api
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITicketService, TicketService>();
 
+            services.AddScoped<IDataInitializer, DataInitializer>();
             services.AddSingleton<IJwtHander, JwtHandler>();
             services.AddSingleton<IMapper>(AutoMapperConfig.Initialize());
 
             services.Configure<JwtSettings>(Configuration.GetSection("jwt"));
+            services.Configure<AppSettings>(Configuration.GetSection("app"));
 
             var builder = new ContainerBuilder();
 
             builder.Populate(services);
             builder.RegisterType<EventRepository>().As<IEventRepository>().InstancePerLifetimeScope();
+           // builder.RegisterType<DataInitializer>().As<IDataInitializer>().InstancePerLifetimeScope();
 
             Container = builder.Build();
 
@@ -104,10 +107,22 @@ namespace Evento.Api
             });
             app.UseMvc();
 
+            SeedData(app);
+
             appLifetime.ApplicationStopped.Register(() =>
             {
                 Container.Dispose();
             });
+        }
+
+        private void SeedData(IApplicationBuilder appBuilder)
+        {
+            var settings = appBuilder.ApplicationServices.GetService<IOptions<AppSettings>>();
+            if(settings.Value.SeedData)
+            {
+                var initializer = appBuilder.ApplicationServices.GetService<IDataInitializer>();
+                initializer.SeedAsync();
+            }
         }
     }
 }
